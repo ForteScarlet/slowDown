@@ -1,5 +1,6 @@
-import love.forte.utils.slowdown.CallbackTask;
+import love.forte.utils.slowdown.RunnableTask;
 
+import java.time.LocalDateTime;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -13,23 +14,38 @@ public class Test {
 
         ScheduledExecutorService service = Executors.newScheduledThreadPool(1);
 
-        CallbackTask<String> firstTask = new CallbackTask<>(service, 2, TimeUnit.SECONDS);
+        RunnableTask firstTask = new RunnableTask(service);
 
         firstTask
-                .setCallback(2, TimeUnit.SECONDS, aa -> {
+                .then(() -> {
                     System.out.println("task 1");
-                    return Integer.parseInt(aa);
+                    System.out.println(LocalDateTime.now());
+                    return 5;
                 })
-                .setCallback(2, TimeUnit.SECONDS, i -> {
+                .then(2, TimeUnit.SECONDS, i -> {
                     System.out.println("task 2");
-                    return i + 5;
+                    System.out.println(LocalDateTime.now());
+                    return i + 5.0;
+                })
+                .then(d -> d + 5)
+                .then(d -> d * 5)
+                .thenAlsoWait(5, TimeUnit.SECONDS)
+                .then(2, TimeUnit.SECONDS, i -> {
+                    System.out.println("Just Nothing. " + i);
+                    System.out.println(LocalDateTime.now());
+                })
+                .then(2, TimeUnit.SECONDS, () -> {
+                    System.out.println("OH, haha.");
+                    System.out.println(LocalDateTime.now());
+                    return "haha";
                 })
                 .end(2, TimeUnit.SECONDS, i -> {
                     System.out.println("i = " + i);
+                    System.out.println(LocalDateTime.now());
                     service.shutdown();
                 });
 
-        firstTask.invoke(a);
+        firstTask.invoke();
 
     }
 }
